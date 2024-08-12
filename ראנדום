@@ -1,0 +1,13 @@
+void displayRandomLeds() {
+  bool chosen[NUM_OF_LEDS] = {false};
+  for (int i = 0; i < NUM_OF_CHOSEN_LEDS; i++) {
+    int idx;
+    do {
+      idx = random(NUM_OF_LEDS);
+    } while (chosen[idx]);
+    chosen[idx] = true;
+    ChosenIndexes[i] = idx;
+    blinkLed(idx);
+  }
+  delay(500);
+}
