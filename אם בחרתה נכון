@@ -1,0 +1,38 @@
+void evaluateGameState() {
+  unsigned long elapsedTime = millis() - firstPressTime;
+
+  if (NumOfPressedIndexes == NUM_OF_CHOSEN_LEDS) {
+    if (areAllButtonsCorrect()) {
+      if (elapsedTime <= 1000) {
+        handleSuccess();
+      } else {
+        handleFailure();
+      }
+    } else {
+      handleFailure();
+    }
+    gameEnded = true;
+  }
+}
+
+bool areAllButtonsCorrect() {
+  for (int i = 0; i < NumOfPressedIndexes; i++) {
+    if (!isChosenButton(PressedIndexes[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void handleSuccess() {
+  tone(pinPsvBzzr, TONE_SUCCESS, 500);
+  digitalWrite(pinLed_G, HIGH);
+  delay(1000);
+  digitalWrite(pinLed_G, LOW);
+}
+
+void turnOffAllLeds() {
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
+    digitalWrite(Leds[i], LOW);
+  }
+}
