@@ -1,0 +1,203 @@
+#define pinLed_G 8
+#define pinLed_Y 9
+#define pinLed_B 10
+#define pinLed_R 11
+
+#define pinBtn_G 2
+#define pinBtn_Y 3
+#define pinBtn_B 4
+#define pinBtn_R 12
+
+#define pinPsvBzzr 5
+
+#define NUM_OF_LEDS 4
+#define NUM_OF_CHOSEN_LEDS 3
+
+int Leds[NUM_OF_LEDS] = {pinLed_G, pinLed_Y, pinLed_B, pinLed_R};
+int ChosenIndexes[NUM_OF_CHOSEN_LEDS];
+int Btns[NUM_OF_LEDS] = {pinBtn_G, pinBtn_Y, pinBtn_B, pinBtn_R};
+
+int val[NUM_OF_LEDS];
+int lastVal[NUM_OF_LEDS];
+unsigned long lastPressTime[NUM_OF_LEDS];
+int PressedIndexes[NUM_OF_LEDS];
+int NumOfPressedIndexes = 0;
+unsigned long gameStartTime;
+unsigned long firstPressTime;
+bool gameStarted = false;
+bool gameEnded = false;
+
+#define TONE_SUCCESS 1000
+#define TONE_FAILURE 500
+
+void setup() {
+  initializePins();
+  randomSeed(analogRead(A1));
+}
+
+void loop() {
+  if (gameEnded) {
+    handleNewGameRequest();
+  } else if (!gameStarted) {
+    startNewGame();
+  } else {
+    handleCurrentGame();
+  }
+}
+
+void initializePins() {
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
+    pinMode(Leds[i], OUTPUT);
+    pinMode(Btns[i], INPUT_PULLUP);
+    lastVal[i] = digitalRead(Btns[i]);
+    lastPressTime[i] = millis();
+  }
+  pinMode(pinPsvBzzr, OUTPUT);
+}
+
+void startNewGame() {
+  resetGame();
+  displayRandomLeds();
+  playStartTone();
+}
+
+void resetGame() {
+  NumOfPressedIndexes = 0;
+  gameStartTime = millis();
+  gameStarted = true;
+  gameEnded = false;
+  turnOffAllLeds();
+}
+
+void displayRandomLeds() {
+  bool chosen[NUM_OF_LEDS] = {false};
+  for (int i = 0; i < NUM_OF_CHOSEN_LEDS; i++) {
+    int idx;
+    do {
+      idx = random(NUM_OF_LEDS);
+    } while (chosen[idx]);
+    chosen[idx] = true;
+    ChosenIndexes[i] = idx;
+    blinkLed(idx);
+  }
+  delay(500);
+}
+
+void blinkLed(int idx) {
+  digitalWrite(Leds[idx], HIGH);
+  delay(1000);
+  digitalWrite(Leds[idx], LOW);
+  delay(100);
+}
+
+void playStartTone() {
+  tone(pinPsvBzzr, TONE_SUCCESS, 100);
+  delay(150);
+}
+
+void handleCurrentGame() {
+  int pressedBtn = detectButtonPress();
+  if (pressedBtn != -1) {
+    if (NumOfPressedIndexes == 0) {
+      firstPressTime = millis();
+    }
+    processButtonPress(pressedBtn);
+  }
+  evaluateGameState();
+}
+
+void handleNewGameRequest() {
+  if (detectButtonPress() != -1) {
+    startNewGame();
+  }
+}
+
+int detectButtonPress() {
+  int pressedBtn = -1;
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
+    val[i] = digitalRead(Btns[i]);
+    if (val[i] == LOW && lastVal[i] == HIGH && millis() - lastPressTime[i] > 50) {
+      lastPressTime[i] = millis();
+      pressedBtn = i;
+    }
+    lastVal[i] = val[i];
+  }
+  return pressedBtn;
+}
+
+void processButtonPress(int buttonIndex) {
+  if (!isButtonPressed(buttonIndex)) {
+    PressedIndexes[NumOfPressedIndexes++] = buttonIndex;
+    digitalWrite(Leds[buttonIndex], HIGH);
+  }
+
+  if (!isChosenButton(buttonIndex)) {
+    handleFailure();
+    resetGame();
+  }
+}
+
+bool isButtonPressed(int buttonIndex) {
+  for (int i = 0; i < NumOfPressedIndexes; i++) {
+    if (PressedIndexes[i] == buttonIndex) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isChosenButton(int buttonIndex) {
+  for (int i = 0; i < NUM_OF_CHOSEN_LEDS; i++) {
+    if (ChosenIndexes[i] == buttonIndex) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void handleFailure() {
+  tone(pinPsvBzzr, TONE_FAILURE, 500);
+  digitalWrite(pinLed_R, HIGH);
+  delay(1000);
+  digitalWrite(pinLed_R, LOW);
+  gameEnded = true;
+}
+
+void evaluateGameState() {
+  unsigned long elapsedTime = millis() - firstPressTime;
+
+  if (NumOfPressedIndexes == NUM_OF_CHOSEN_LEDS) {
+    if (areAllButtonsCorrect()) {
+      if (elapsedTime <= 1000) {
+        handleSuccess();
+      } else {
+        handleFailure();
+      }
+    } else {
+      handleFailure();
+    }
+    gameEnded = true;
+  }
+}
+
+bool areAllButtonsCorrect() {
+  for (int i = 0; i < NumOfPressedIndexes; i++) {
+    if (!isChosenButton(PressedIndexes[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void handleSuccess() {
+  tone(pinPsvBzzr, TONE_SUCCESS, 500);
+  digitalWrite(pinLed_G, HIGH);
+  delay(1000);
+  digitalWrite(pinLed_G, LOW);
+}
+
+void turnOffAllLeds() {
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
+    digitalWrite(Leds[i], LOW);
+  }
+}
