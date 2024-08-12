@@ -1,0 +1,38 @@
+void setup() {
+  initializePins();
+  randomSeed(analogRead(A1));
+}
+
+void loop() {
+  if (gameEnded) {
+    handleNewGameRequest();
+  } else if (!gameStarted) {
+    startNewGame();
+  } else {
+    handleCurrentGame();
+  }
+}
+
+void initializePins() {
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
+    pinMode(Leds[i], OUTPUT);
+    pinMode(Btns[i], INPUT_PULLUP);
+    lastVal[i] = digitalRead(Btns[i]);
+    lastPressTime[i] = millis();
+  }
+  pinMode(pinPsvBzzr, OUTPUT);
+}
+
+void startNewGame() {
+  resetGame();
+  displayRandomLeds();
+  playStartTone();
+}
+
+void resetGame() {
+  NumOfPressedIndexes = 0;
+  gameStartTime = millis();
+  gameStarted = true;
+  gameEnded = false;
+  turnOffAllLeds();
+}
