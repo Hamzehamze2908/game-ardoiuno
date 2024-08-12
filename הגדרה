@@ -1,0 +1,25 @@
+bool isButtonPressed(int buttonIndex) {
+  for (int i = 0; i < NumOfPressedIndexes; i++) {
+    if (PressedIndexes[i] == buttonIndex) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isChosenButton(int buttonIndex) {
+  for (int i = 0; i < NUM_OF_CHOSEN_LEDS; i++) {
+    if (ChosenIndexes[i] == buttonIndex) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void handleFailure() {
+  tone(pinPsvBzzr, TONE_FAILURE, 500);
+  digitalWrite(pinLed_R, HIGH);
+  delay(1000);
+  digitalWrite(pinLed_R, LOW);
+  gameEnded = true;
+}
