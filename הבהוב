@@ -1,0 +1,11 @@
+void blinkLed(int idx) {
+  digitalWrite(Leds[idx], HIGH);
+  delay(1000);
+  digitalWrite(Leds[idx], LOW);
+  delay(100);
+}
+
+void playStartTone() {
+  tone(pinPsvBzzr, TONE_SUCCESS, 100);
+  delay(150);
+}
