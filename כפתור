@@ -1,0 +1,41 @@
+void handleCurrentGame() {
+  int pressedBtn = detectButtonPress();
+  if (pressedBtn != -1) {
+    if (NumOfPressedIndexes == 0) {
+      firstPressTime = millis();
+    }
+    processButtonPress(pressedBtn);
+  }
+  evaluateGameState();
+}
+
+void handleNewGameRequest() {
+  if (detectButtonPress() != -1) {
+    startNewGame();
+  }
+}
+
+int detectButtonPress() {
+  int pressedBtn = -1;
+  for (int i = 0; i < NUM_OF_LEDS; i++) {
+    val[i] = digitalRead(Btns[i]);
+    if (val[i] == LOW && lastVal[i] == HIGH && millis() - lastPressTime[i] > 50) {
+      lastPressTime[i] = millis();
+      pressedBtn = i;
+    }
+    lastVal[i] = val[i];
+  }
+  return pressedBtn;
+}
+
+void processButtonPress(int buttonIndex) {
+  if (!isButtonPressed(buttonIndex)) {
+    PressedIndexes[NumOfPressedIndexes++] = buttonIndex;
+    digitalWrite(Leds[buttonIndex], HIGH);
+  }
+
+  if (!isChosenButton(buttonIndex)) {
+    handleFailure();
+    resetGame();
+  }
+}
